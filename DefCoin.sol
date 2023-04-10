@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.14;
+pragma solidity ^0.8.14;
 
 interface IERC20 {
     function totalSupply() external view returns (uint);
@@ -30,6 +30,12 @@ contract DefCoin is IERC20 {
     string public name = "DefCoin";
     string public symbol = "DEF";
     uint8 public decimals = 18;
+    address public owner;
+
+    // Payable constructor can receive Ether
+    constructor() {
+        owner = (msg.sender);
+    }
 
     function transfer(address recipient, uint amount) external returns (bool) {
         balanceOf[msg.sender] -= amount;
@@ -57,12 +63,14 @@ contract DefCoin is IERC20 {
     }
 
     function mint(uint amount) external {
+        require(msg.sender == owner, "Not owner");
         balanceOf[msg.sender] += amount;
         totalSupply += amount;
         emit Transfer(address(0), msg.sender, amount);
     }
 
     function burn(uint amount) external {
+        require(msg.sender == owner, "Not owner");
         balanceOf[msg.sender] -= amount;
         totalSupply -= amount;
         emit Transfer(msg.sender, address(0), amount);
