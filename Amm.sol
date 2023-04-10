@@ -32,12 +32,14 @@ contract Amm {
     uint public abcCoinTotalSupply;
     uint public defCoinTotalSupply;
     uint public ghiCoinTotalSupply;
+    address[] public lpProviders;
     uint private product;
     uint private temp;
     address abcCoinAddress;
     address defCoinAddress;
     address lpTokenAddress;
     address public owner;
+    uint private lp_index;
 
 
     constructor(address _abcCoinAddress, address _defCoinAddress, address _ghiCoinAddress) {
@@ -61,7 +63,8 @@ contract Amm {
             require(tokB.balanceOf(address(this)) >= temp, "AMM contract does not have sufficient liquidity");
             tokB.transfer(msg.sender, temp);
             defCoinTotalSupply = defCoinTotalSupply - temp;
-        } else if (tokenA == defCoinAddress) {
+        } 
+        else if (tokenA == defCoinAddress) {
             defCoinTotalSupply = defCoinTotalSupply + amount;
             temp = abcCoinTotalSupply - (product/defCoinTotalSupply);
             IERC20 tokA = IERC20(tokenA);
@@ -86,6 +89,10 @@ contract Amm {
         abcCoinTotalSupply -= _ghiCoinAmount;
         defCoinTotalSupply -= _ghiCoinAmount;
         product = abcCoinTotalSupply * defCoinTotalSupply;
+        if(lpToken.balanceOf(msg.sender)==0){
+            lp_index = indexOf(lpProviders, msg.sender);
+            delete lpProviders[lp_index];
+        }
     }
 
     function addLiquidity(uint _abcCoinAmount, uint _defCoinAmount) public payable {
@@ -103,6 +110,7 @@ contract Amm {
         lpToken.mint(sqrt(_abcCoinAmount * _defCoinAmount)); // need to provide access to amm contract to mint lp token
         lpToken.transfer(msg.sender, sqrt(_abcCoinAmount * _defCoinAmount));
         product = abcCoinTotalSupply * defCoinTotalSupply;
+        lpProviders.push(msg.sender);
     }
 
     function sqrt(uint256 x) internal pure returns (uint256 result) {
@@ -151,5 +159,14 @@ contract Amm {
             return result >= roundedDownResult ? roundedDownResult : result;
         }
     }
+
+    function indexOf(address[] memory arr, address searchFor) private pure returns (uint256) {
+    for (uint256 i = 0; i < arr.length; i++) {
+      if (arr[i] == searchFor) {
+        return i;
+      }
+    }
+    revert("Not Found");
+  }
 
 }
