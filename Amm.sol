@@ -119,6 +119,19 @@ contract Amm {
         lpProviders.push(msg.sender);
     }
 
+    function getSwappedAmount(address tokenA, uint amountA) external view returns (uint amountB) {
+        require(tokenA == address(abcCoinAddress) || tokenA == address(defCoinAddress), "Token to be swapped is neither abc coin neither def coin");
+        uint amountAfterFee = (amountA * 997)/1000;
+
+        if (tokenA == abcCoinAddress) {
+            uint newAbcCoinTotalSupply = abcCoinTotalSupply + amountAfterFee;
+            return defCoinTotalSupply - (product/newAbcCoinTotalSupply);
+        } else if (tokenA == defCoinAddress) {
+            uint newDefCoinTotalSupply = defCoinTotalSupply + amountAfterFee;
+            return abcCoinTotalSupply - (product/newDefCoinTotalSupply);
+        }
+    }
+
     function sqrt(uint256 x) internal pure returns (uint256 result) {
         if (x == 0) {
             return 0;
