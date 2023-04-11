@@ -48,17 +48,19 @@ contract Amm {
         defCoinAddress = address(_defCoinAddress);
         lpTokenAddress = address(_ghiCoinAddress);
         owner = (msg.sender);
+        addLiquidity(1000000, 1000000); //conversion rate: 1 token A = 1 token B
     }
-
+    
     function swap(address tokenA, address tokenB, uint amount) public {
-        // require(tokenA != (abcCoinAddress || defCoinAddress), "token A is neither abc coin nor def coin");
-        // require(tokenB != (abcCoinAddress || defCoinAddress), "token B is neither abc coin nor def coin");
+        require((tokenA == abcCoinAddress) || (tokenA == defCoinAddress), "token A is neither abc coin nor def coin");
+        require((tokenB == abcCoinAddress) || (tokenB == defCoinAddress), "token B is neither abc coin nor def coin");
+        require(tokenA != tokenB, "token A and token B provided is same");
         IERC20 tokA = IERC20(tokenA);
         IERC20 tokB = IERC20(tokenB);
         uint dexFee = (dexFeePercent/100) * amount; // calculated in units of token A
         uint _amount = amount - dexFee;
         tokA.transferFrom(msg.sender, address(this), dexFee);
-        product = abcCoinTotalSupply * defCoinTotalSupply;
+        product = abcCoinTotalSupply * defCoinTotalSupply; // should be a constant unless we add or remove liquidity
         if (tokenA == abcCoinAddress) {
             abcCoinTotalSupply = abcCoinTotalSupply + _amount + dexFee;
             temp = defCoinTotalSupply - (product/abcCoinTotalSupply);
