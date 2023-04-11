@@ -121,8 +121,8 @@ contract Amm {
 
     function getSwappedAmount(address tokenA, uint amountA) external view returns (uint amountB) {
         require(tokenA == address(abcCoinAddress) || tokenA == address(defCoinAddress), "Token to be swapped is neither abc coin neither def coin");
-        uint dexFee = (dexFeePercent/100) * amount; // calculated in units of token A
-        uint _amount = amount - dexFee;
+        uint dexFee = (dexFeePercent/100) * amountA; // calculated in units of token A
+        uint _amount = amountA - dexFee;
 
         if (tokenA == abcCoinAddress) {
             uint newAbcCoinTotalSupply = abcCoinTotalSupply + _amount;
