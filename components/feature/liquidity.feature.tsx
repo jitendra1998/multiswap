@@ -2,6 +2,7 @@ import {
   AMM_CONTRACT_ADDRESS,
   CDCX_CONTRACT_ADDRESS,
   DEF_CONTRACT_ADDRESS,
+  LP_CDCX_CONTRACT_ADDRESS,
 } from "../../constants/constants";
 import { useAccount, useContract, useSigner } from "wagmi";
 
@@ -17,6 +18,8 @@ const Liquidity = () => {
   const { address } = useAccount();
   const [cdcxBalance, setCdcxBalance] = useState() as any;
   const [defBalance, setDefBalance] = useState() as any;
+  const [lpBalance, setLPBalance] = useState() as any;
+  
 
   const ammContract = useContract({
     address: AMM_CONTRACT_ADDRESS,
@@ -36,6 +39,12 @@ const Liquidity = () => {
     signerOrProvider: signer,
   });
 
+  const lpContract = useContract({
+    address: LP_CDCX_CONTRACT_ADDRESS,
+    abi: ERC20_ABI,
+    signerOrProvider: signer,
+  });
+
   useEffect(() => {
     async function getTotalToken(contract: any, setBalance: any) {
       if (contract) {
@@ -45,6 +54,7 @@ const Liquidity = () => {
     }
     getTotalToken(cdcxContract, setCdcxBalance);
     getTotalToken(defContract, setDefBalance);
+    getTotalToken(lpContract, setLPBalance);
   });
 
   const liquidForm = useRef(null) as any;
@@ -69,9 +79,19 @@ const Liquidity = () => {
     }
   };
 
+  const redeemLPToken = async() => {
+    if(ammContract){
+      await ammContract.removeLiquidity();
+    }
+  }
+
   return (
+    <>
+
     <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+     
       <form className="space-y-6" ref={liquidForm} onSubmit={addLiquidity}>
+        
         <Input token="CDCX" balance={cdcxBalance} />
         <Input token="DEF" balance={defBalance} />
 
@@ -84,7 +104,16 @@ const Liquidity = () => {
           </button>
         </div>
       </form>
+      <button
+            type="button"
+            onClick={redeemLPToken}
+            className="flex w-full justify-center rounded-md bg-white mt-4 px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-slate-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+          >
+            Redeem LP Token 
+          </button>
+          <span className="text-gray-400 mt-1 flex justify-center text-sm">Available : {lpBalance} </span>
     </div>
+    </>
   );
 };
 
