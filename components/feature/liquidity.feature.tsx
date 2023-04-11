@@ -3,15 +3,20 @@ import {
   CDCX_CONTRACT_ADDRESS,
   DEF_CONTRACT_ADDRESS,
 } from "../../constants/constants";
-import { useContract, useSigner } from "wagmi";
+import { useAccount, useContract, useSigner } from "wagmi";
 
 import { AMM_ABI } from "../../abi/amm";
 import { ERC20_ABI } from "../../abi/erc20";
 import Input from "../elements/input.component";
+import { useEffect } from "react";
 import { useRef } from "react";
+import { useState } from "react";
 
 const Liquidity = () => {
   const { data: signer, isError, isLoading } = useSigner();
+  const { address } = useAccount();
+  const [cdcxBalance, setCdcxBalance] = useState() as any;
+  const [defBalance, setDefBalance] = useState() as any;
 
   const ammContract = useContract({
     address: AMM_CONTRACT_ADDRESS,
@@ -31,12 +36,22 @@ const Liquidity = () => {
     signerOrProvider: signer,
   });
 
+  useEffect(() => {
+    async function getTotalToken(contract: any, setBalance: any) {
+      if (contract) {
+        const cdcxTokens = await contract.balanceOf(address);
+        setBalance(cdcxTokens.toNumber());
+      }
+    }
+    getTotalToken(cdcxContract, setCdcxBalance);
+    getTotalToken(defContract, setDefBalance);
+  });
+
   const liquidForm = useRef(null) as any;
 
   const addLiquidity = async (event: any) => {
     event.preventDefault();
     const form = liquidForm.current;
-
     await getApproval(form["CDCX"].value, form["DEF"].value);
     if (ammContract)
       await ammContract.addLiquidity(form["CDCX"].value, form["DEF"].value);
@@ -44,15 +59,21 @@ const Liquidity = () => {
   };
 
   const getApproval = async (cdcxAmt: any, defAmt: any) => {
-    if (cdcxContract) await cdcxContract.approve(AMM_CONTRACT_ADDRESS, cdcxAmt);
-    if (defContract) await defContract.approve(AMM_CONTRACT_ADDRESS, defAmt);
+    if (cdcxContract) {
+      const receipt = await cdcxContract.approve(AMM_CONTRACT_ADDRESS, cdcxAmt);
+      receipt.wait();
+    }
+    if (defContract) {
+      const receipt = await defContract.approve(AMM_CONTRACT_ADDRESS, defAmt);
+      receipt.wait();
+    }
   };
 
   return (
     <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
       <form className="space-y-6" ref={liquidForm} onSubmit={addLiquidity}>
-        <Input token="CDCX" balance={3000} />
-        <Input token="DEF" balance={2000} />
+        <Input token="CDCX" balance={cdcxBalance} />
+        <Input token="DEF" balance={defBalance} />
 
         <div>
           <button
