@@ -32,6 +32,7 @@ contract Amm {
     uint public abcCoinTotalSupply;
     uint public defCoinTotalSupply;
     uint public ghiCoinTotalSupply;
+    uint public dexFeePercent = 1;
     address[] public lpProviders;
     uint private product;
     uint private temp;
@@ -52,25 +53,26 @@ contract Amm {
     function swap(address tokenA, address tokenB, uint amount) public {
         // require(tokenA != (abcCoinAddress || defCoinAddress), "token A is neither abc coin nor def coin");
         // require(tokenB != (abcCoinAddress || defCoinAddress), "token B is neither abc coin nor def coin");
+        IERC20 tokA = IERC20(tokenA);
+        IERC20 tokB = IERC20(tokenB);
+        uint dexFee = (dexFeePercent/100) * amount; // calculated in units of token A
+        uint _amount = amount - dexFee;
+        tokA.transferFrom(msg.sender, address(this), dexFee);
         product = abcCoinTotalSupply * defCoinTotalSupply;
         if (tokenA == abcCoinAddress) {
-            abcCoinTotalSupply = abcCoinTotalSupply + amount;
+            abcCoinTotalSupply = abcCoinTotalSupply + _amount + dexFee;
             temp = defCoinTotalSupply - (product/abcCoinTotalSupply);
-            IERC20 tokA = IERC20(tokenA);
-            IERC20 tokB = IERC20(tokenB);
             require(tokA.balanceOf(msg.sender) >= amount, "You have insufficient funds");
-            tokA.transferFrom(msg.sender, address(this), amount);
+            tokA.transferFrom(msg.sender, address(this), _amount);
             require(tokB.balanceOf(address(this)) >= temp, "AMM contract does not have sufficient liquidity");
             tokB.transfer(msg.sender, temp);
             defCoinTotalSupply = defCoinTotalSupply - temp;
         } 
         else if (tokenA == defCoinAddress) {
-            defCoinTotalSupply = defCoinTotalSupply + amount;
+            defCoinTotalSupply = defCoinTotalSupply + _amount + dexFee;
             temp = abcCoinTotalSupply - (product/defCoinTotalSupply);
-            IERC20 tokA = IERC20(tokenA);
-            IERC20 tokB = IERC20(tokenB);
             require(tokA.balanceOf(msg.sender) >= amount, "You have insufficient funds");
-            tokA.transferFrom(msg.sender, address(this), amount);
+            tokA.transferFrom(msg.sender, address(this), _amount);
             require(tokB.balanceOf(address(this)) >= temp, "AMM contract does not have sufficient liquidity");
             tokB.transfer(msg.sender, temp);
             abcCoinTotalSupply = abcCoinTotalSupply - temp;
@@ -78,16 +80,20 @@ contract Amm {
     }
 
     function removeLiquidity(uint _ghiCoinAmount) public {
+        //check needs to be added that this is only called by an external lp provider
         IERC20 abcCoin = IERC20(abcCoinAddress);
         IERC20 defCoin = IERC20(defCoinAddress);
         IERC20 lpToken = IERC20(lpTokenAddress);
         require(lpToken.balanceOf(msg.sender) >= _ghiCoinAmount, "You have insufficient funds");
         lpToken.transferFrom(msg.sender, address(this), _ghiCoinAmount);
         ghiCoinTotalSupply += _ghiCoinAmount;
-        abcCoin.transfer(msg.sender, _ghiCoinAmount); //need to check logic once
-        defCoin.transfer(msg.sender, _ghiCoinAmount);
-        abcCoinTotalSupply -= _ghiCoinAmount;
-        defCoinTotalSupply -= _ghiCoinAmount;
+        uint percent = _ghiCoinAmount/(lpToken.balanceOf(msg.sender));
+        uint abcCoinTransferAmount = percent * abcCoinTotalSupply;
+        uint defCoinTransferAmount = percent * defCoinTotalSupply;
+        abcCoin.transfer(msg.sender, abcCoinTransferAmount); //need to check logic once
+        defCoin.transfer(msg.sender, defCoinTransferAmount);
+        abcCoinTotalSupply -= abcCoinTransferAmount;
+        defCoinTotalSupply -= defCoinTransferAmount;
         product = abcCoinTotalSupply * defCoinTotalSupply;
         if(lpToken.balanceOf(msg.sender)==0){
             lp_index = indexOf(lpProviders, msg.sender);
