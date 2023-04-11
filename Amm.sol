@@ -121,13 +121,14 @@ contract Amm {
 
     function getSwappedAmount(address tokenA, uint amountA) external view returns (uint amountB) {
         require(tokenA == address(abcCoinAddress) || tokenA == address(defCoinAddress), "Token to be swapped is neither abc coin neither def coin");
-        uint amountAfterFee = (amountA * 997)/1000;
+        uint dexFee = (dexFeePercent/100) * amount; // calculated in units of token A
+        uint _amount = amount - dexFee;
 
         if (tokenA == abcCoinAddress) {
-            uint newAbcCoinTotalSupply = abcCoinTotalSupply + amountAfterFee;
+            uint newAbcCoinTotalSupply = abcCoinTotalSupply + _amount;
             return defCoinTotalSupply - (product/newAbcCoinTotalSupply);
         } else if (tokenA == defCoinAddress) {
-            uint newDefCoinTotalSupply = defCoinTotalSupply + amountAfterFee;
+            uint newDefCoinTotalSupply = defCoinTotalSupply + _amount;
             return abcCoinTotalSupply - (product/newDefCoinTotalSupply);
         }
     }
