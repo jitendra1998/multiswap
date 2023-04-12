@@ -13,49 +13,31 @@ import { useEffect } from "react";
 import { useRef } from "react";
 import { useState } from "react";
 
-const Liquidity = () => {
+const Liquidity = ({
+  lpContract,
+  ammContract,
+  defContract,
+  cdcxContract,
+}: any) => {
   const { data: signer, isError, isLoading } = useSigner();
   const { address } = useAccount();
   const [cdcxBalance, setCdcxBalance] = useState() as any;
   const [defBalance, setDefBalance] = useState() as any;
   const [lpBalance, setLPBalance] = useState() as any;
-  
-
-  const ammContract = useContract({
-    address: AMM_CONTRACT_ADDRESS,
-    abi: AMM_ABI,
-    signerOrProvider: signer,
-  });
-
-  const cdcxContract = useContract({
-    address: CDCX_CONTRACT_ADDRESS,
-    abi: ERC20_ABI,
-    signerOrProvider: signer,
-  });
-
-  const defContract = useContract({
-    address: DEF_CONTRACT_ADDRESS,
-    abi: ERC20_ABI,
-    signerOrProvider: signer,
-  });
-
-  const lpContract = useContract({
-    address: LP_CDCX_CONTRACT_ADDRESS,
-    abi: ERC20_ABI,
-    signerOrProvider: signer,
-  });
 
   useEffect(() => {
-    async function getTotalToken(contract: any, setBalance: any) {
+    const getTotalToken = async (contract: any, setBalance: any) => {
       if (contract) {
         const cdcxTokens = await contract.balanceOf(address);
         setBalance(cdcxTokens.toNumber());
       }
+    };
+    if (cdcxContract && address) {
+      getTotalToken(cdcxContract, setCdcxBalance);
+      getTotalToken(defContract, setDefBalance);
+      getTotalToken(lpContract, setLPBalance);
     }
-    getTotalToken(cdcxContract, setCdcxBalance);
-    getTotalToken(defContract, setDefBalance);
-    getTotalToken(lpContract, setLPBalance);
-  });
+  }, [cdcxContract, lpContract, defContract]);
 
   const liquidForm = useRef(null) as any;
 
@@ -71,48 +53,50 @@ const Liquidity = () => {
   const getApproval = async (cdcxAmt: any, defAmt: any) => {
     if (cdcxContract) {
       const receipt = await cdcxContract.approve(AMM_CONTRACT_ADDRESS, cdcxAmt);
-      receipt.wait();
+      await receipt.wait();
     }
     if (defContract) {
       const receipt = await defContract.approve(AMM_CONTRACT_ADDRESS, defAmt);
-      receipt.wait();
+      await receipt.wait();
     }
   };
 
-  const redeemLPToken = async() => {
-    if(ammContract){
-      await ammContract.removeLiquidity();
+  const redeemLPToken = async () => {
+    if (ammContract) {
+      const tx = await lpContract.approve(AMM_CONTRACT_ADDRESS, 10);
+      await tx.wait();
+      const receipt = await ammContract.removeLiquidity(10);
+      await receipt.wait();
     }
-  }
+  };
 
   return (
     <>
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        <form className="space-y-6" ref={liquidForm} onSubmit={addLiquidity}>
+          <Input token="CDCX" balance={cdcxBalance} />
+          <Input token="DEF" balance={defBalance} />
 
-    <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-     
-      <form className="space-y-6" ref={liquidForm} onSubmit={addLiquidity}>
-        
-        <Input token="CDCX" balance={cdcxBalance} />
-        <Input token="DEF" balance={defBalance} />
-
-        <div>
-          <button
-            type="submit"
-            className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-          >
-            Add Liquidity
-          </button>
-        </div>
-      </form>
-      <button
-            type="button"
-            onClick={redeemLPToken}
-            className="flex w-full justify-center rounded-md bg-white mt-4 px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-slate-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-          >
-            Redeem LP Token 
-          </button>
-          <span className="text-gray-400 mt-1 flex justify-center text-sm">Available : {lpBalance} </span>
-    </div>
+          <div>
+            <button
+              type="submit"
+              className={`flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600`}
+            >
+              Add Liquidity
+            </button>
+          </div>
+        </form>
+        <button
+          type="button"
+          onClick={redeemLPToken}
+          className="flex w-full justify-center rounded-md bg-white mt-4 px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-slate-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+        >
+          Redeem LP Token
+        </button>
+        <span className="text-gray-400 mt-1 flex justify-center text-sm">
+          Available : {lpBalance}{" "}
+        </span>
+      </div>
     </>
   );
 };

@@ -1,8 +1,17 @@
+import {
+  AMM_CONTRACT_ADDRESS,
+  CDCX_CONTRACT_ADDRESS,
+  DEF_CONTRACT_ADDRESS,
+  LP_CDCX_CONTRACT_ADDRESS,
+} from '../constants/constants';
+import { useAccount, useContract, useSigner } from "wagmi";
+
 import AMM from '../components/layout/amm.layout';
+import { AMM_ABI } from '../abi/amm';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
+import { ERC20_ABI } from '../abi/erc20';
 import Head from 'next/head';
 import type { NextPage } from 'next';
-import { ethers } from 'ethers';
 import styles from '../styles/Home.module.css';
 
 const Home: NextPage = () => {

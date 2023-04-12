@@ -1,4 +1,4 @@
-export const AMM_ABI = [
+export const AMM_ABI =  [
     {
         "inputs": [
             {
@@ -66,12 +66,68 @@ export const AMM_ABI = [
     },
     {
         "inputs": [],
+        "name": "dexFeePercent",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "tokenA",
+                "type": "address"
+            },
+            {
+                "internalType": "uint256",
+                "name": "amountA",
+                "type": "uint256"
+            }
+        ],
+        "name": "getSwappedAmount",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "amountB",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
         "name": "ghiCoinTotalSupply",
         "outputs": [
             {
                 "internalType": "uint256",
                 "name": "",
                 "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "name": "lpProviders",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
             }
         ],
         "stateMutability": "view",
@@ -100,7 +156,7 @@ export const AMM_ABI = [
         ],
         "name": "removeLiquidity",
         "outputs": [],
-        "stateMutability": "nonpayable",
+        "stateMutability": "payable",
         "type": "function"
     },
     {
