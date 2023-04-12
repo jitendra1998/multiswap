@@ -3,18 +3,17 @@ import {
   CDCX_CONTRACT_ADDRESS,
   DEF_CONTRACT_ADDRESS,
 } from "../../constants/constants";
-import { useContract, useSigner } from "wagmi";
 
 import { AMM_ABI } from "../../abi/amm";
 import { ArrowsUpDownIcon } from "@heroicons/react/20/solid";
 import { ERC20_ABI } from "../../abi/erc20";
 import InputWithDropdown from "../elements/inputdropdown.component";
 import { useRef } from "react";
+import { useState } from "react";
 
 const Swap = ({ lpContract, ammContract, defContract, cdcxContract }: any) => {
   const swapForm = useRef(null) as any;
-  const zap = useRef(null) as any;
-  const { data: signer, isError, isLoading } = useSigner();
+  const [isSwapping, setIsSwapping] = useState(false);
 
   const swapToken = async (event: any) => {
     event.preventDefault();
@@ -22,15 +21,18 @@ const Swap = ({ lpContract, ammContract, defContract, cdcxContract }: any) => {
     if (form["first"].value > 0 && form["second"].value > 0) {
       try {
         if (ammContract) {
+          setIsSwapping(true);
           const receipt = await ammContract.swap(
             CDCX_CONTRACT_ADDRESS,
             DEF_CONTRACT_ADDRESS,
             form["first"].value
           );
           await receipt.wait();
+          setIsSwapping(false);
         }
       } catch (error) {
         alert(error);
+        setIsSwapping(false)
       }
     } else {
       alert("Invalid Input");
@@ -64,10 +66,11 @@ const Swap = ({ lpContract, ammContract, defContract, cdcxContract }: any) => {
           isDisabled={true}
         />
         <button
+          disabled={isSwapping}
           type="submit"
-          className="inline-flex w-full mt-4 justify-center items-center gap-x-2 rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+          className={`${isSwapping ? 'animate-pulse':''}inline-flex w-full mt-4 justify-center items-center gap-x-2 rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600`}
         >
-          SWAP
+          {isSwapping ? 'Swapping...' : 'SWAP'}
         </button>
       </form>
     </div>
