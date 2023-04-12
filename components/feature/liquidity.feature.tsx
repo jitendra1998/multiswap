@@ -19,11 +19,14 @@ const Liquidity = ({
   defContract,
   cdcxContract,
 }: any) => {
-  const { data: signer, isError, isLoading } = useSigner();
+  const { data: signer, isError } = useSigner();
   const { address } = useAccount();
   const [cdcxBalance, setCdcxBalance] = useState() as any;
   const [defBalance, setDefBalance] = useState() as any;
   const [lpBalance, setLPBalance] = useState() as any;
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [updateState, setUpdateState] = useState (false);
 
   useEffect(() => {
     const getTotalToken = async (contract: any, setBalance: any) => {
@@ -37,16 +40,23 @@ const Liquidity = ({
       getTotalToken(defContract, setDefBalance);
       getTotalToken(lpContract, setLPBalance);
     }
-  }, [cdcxContract, lpContract, defContract]);
+  }, [cdcxContract, lpContract, defContract, updateState]);
 
   const liquidForm = useRef(null) as any;
 
   const addLiquidity = async (event: any) => {
     event.preventDefault();
     const form = liquidForm.current;
+    setIsLoading(true);
     await getApproval(form["CDCX"].value, form["DEF"].value);
-    if (ammContract)
-      await ammContract.addLiquidity(form["CDCX"].value, form["DEF"].value);
+    if (ammContract){
+      const tx = await ammContract.addLiquidity(form["CDCX"].value, form["DEF"].value);
+      await tx.wait();
+      setIsLoading(false);
+    }
+    form["CDCX"].value = '';
+    form["DEF"].value = ''
+    setUpdateState(true);
     return;
   };
 
@@ -67,6 +77,7 @@ const Liquidity = ({
       await tx.wait();
       const receipt = await ammContract.removeLiquidity(10);
       await receipt.wait();
+      setUpdateState(true);
     }
   };
 
@@ -80,14 +91,16 @@ const Liquidity = ({
           <div>
             <button
               type="submit"
-              className={`flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600`}
+              disabled={isLoading}
+              className={`${isLoading ? 'animate-pulse': ''} flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600`}
             >
-              Add Liquidity
+              {isLoading ? 'Adding Liquidity...' : 'Add Liquidity'}
             </button>
           </div>
         </form>
         <button
           type="button"
+          disabled={isLoading}
           onClick={redeemLPToken}
           className="flex w-full justify-center rounded-md bg-white mt-4 px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-slate-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
         >

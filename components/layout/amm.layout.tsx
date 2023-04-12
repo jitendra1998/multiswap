@@ -40,9 +40,9 @@ const AMM = () => {
   });
 
   return (
-    <div className="divide-y divide-gray-200 overflow-hidden rounded-lg bg-slate-50 shadow w-1/3 ">
+    <div className="divide-y divide-gray-200 overflow-hidden rounded-lg bg-slate-200 shadow w-1/3 ">
       <div className="py-2 px-5">
-        <Tabs.Group style="underline" className="">
+        <Tabs.Group style="underline" >
           <Tabs.Item active={true} title="SWAP" className="flex flex-col text-2xl">
             <Swap {...{lpContract , ammContract, defContract, cdcxContract}}/>
           </Tabs.Item>
